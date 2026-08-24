@@ -39,11 +39,25 @@ read -rp "Primary username [${default_user}]: " NEWUSER
 NEWUSER="${NEWUSER:-$default_user}"
 [[ "$NEWUSER" =~ ^[a-z_][a-z0-9_-]*$ ]] || err "invalid username"
 
+echo "Desktop environment:"
+echo "  1) GNOME"
+echo "  2) KDE Plasma"
+echo "  3) Hyprland"
+echo "  4) none (headless/server)"
+read -rp "Select [1-4, default 1]: " de_choice
+case "${de_choice:-1}" in
+  1) DE="gnome" ;;
+  2) DE="kde" ;;
+  3) DE="hyprland" ;;
+  4) DE="none" ;;
+  *) err "invalid selection: ${de_choice}" ;;
+esac
+
 # stateVersion = the release this machine was first installed with
 STATE_VERSION="$(nixos-version | grep -oE '^[0-9]+\.[0-9]+')"
 [ -n "$STATE_VERSION" ] || err "could not determine NixOS release from nixos-version"
 
-info "host: $HOST, user: $NEWUSER, stateVersion: $STATE_VERSION"
+info "host: $HOST, user: $NEWUSER, desktop: $DE, stateVersion: $STATE_VERSION"
 
 # --- create the host directory ----------------------------------------------
 
@@ -57,6 +71,13 @@ cp -r hosts/example "$HOSTDIR"
 
 sed -i "s/username = \"user\";/username = \"$NEWUSER\";/" "$HOSTDIR/default.nix"
 sed -i "s/system.stateVersion = \"[0-9.]*\";/system.stateVersion = \"$STATE_VERSION\";/" "$HOSTDIR/default.nix"
+
+if [ "$DE" = "none" ]; then
+  # drop the desktop import (and the comment block above it stays harmless)
+  sed -i '\|modules/desktop/|d' "$HOSTDIR/default.nix"
+else
+  sed -i "s|modules/desktop/gnome.nix|modules/desktop/$DE.nix|" "$HOSTDIR/default.nix"
+fi
 
 info "generating hardware-configuration.nix (needs sudo)"
 sudo nixos-generate-config --show-hardware-config > "$HOSTDIR/hardware-configuration.nix"

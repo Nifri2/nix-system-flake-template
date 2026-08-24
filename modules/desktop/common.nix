@@ -1,17 +1,9 @@
-# Desktop environment, audio, printing/scanning. Skip this import on servers.
+# Shared desktop baseline: audio, printing/scanning, flatpak, browser.
+# Not imported directly by hosts - each DE module (gnome/kde/hyprland)
+# pulls this in. Servers simply import none of them.
 { config, lib, pkgs, ... }:
 
 {
-  services.xserver.enable = true;
-  services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome.enable = true;
-
-  # Alternative: Hyprland instead of / next to GNOME
-  # programs.hyprland = {
-  #   enable = true;
-  #   xwayland.enable = true;
-  # };
-
   services.xserver.xkb = {
     layout = "us";
     variant = "";

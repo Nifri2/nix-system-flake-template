@@ -17,7 +17,11 @@ hosts/
     hardware-configuration.nix   # placeholder, replaced by bootstrap
 modules/
   core.nix                # nix settings, gc, locale, networking, fish
-  desktop.nix             # GNOME + pipewire + printing/scanning (skip on servers)
+  desktop/
+    common.nix            # pipewire, printing/scanning, flatpak (pulled in by the DE modules)
+    gnome.nix             # GNOME + GDM
+    kde.nix               # KDE Plasma 6 + SDDM
+    hyprland.nix          # Hyprland + SDDM + waybar/wofi/mako basics
   apps.nix                # shared package set (incl. nh, go-task, lefthook)
   optional/
     appimage.nix          # appimage binfmt + nix-ld library set
@@ -39,10 +43,15 @@ cd ~/nix
 ./bootstrap.sh
 ```
 
-The script asks for hostname + username, creates `hosts/<hostname>/`
-from the example, generates the real `hardware-configuration.nix`, pins
-`system.stateVersion` to the installed release, commits, and offers to
-run the first `nixos-rebuild switch --flake .#<hostname>`.
+The script asks for hostname, username and desktop environment
+(GNOME / KDE Plasma / Hyprland / none for servers), creates
+`hosts/<hostname>/` from the example, generates the real
+`hardware-configuration.nix`, pins `system.stateVersion` to the
+installed release, commits, and offers to run the first
+`nixos-rebuild switch --flake .#<hostname>`.
+
+To change DE later, just swap the `modules/desktop/*.nix` import in
+your host's `default.nix` and rebuild.
 
 After the first switch, `nh`, `go-task` and `lefthook` are installed
 system-wide and the daily workflow applies.

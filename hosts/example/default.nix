@@ -8,8 +8,12 @@ in
   imports = [
     ./hardware-configuration.nix
     ../../modules/core.nix
-    ../../modules/desktop.nix
     ../../modules/apps.nix
+
+    # Desktop environment - bootstrap.sh rewrites this line to your
+    # selection (gnome.nix | kde.nix | hyprland.nix) or removes it
+    # entirely for headless machines.
+    ../../modules/desktop/gnome.nix
 
     # Optional feature modules - uncomment what this machine needs:
     # ../../modules/optional/appimage.nix
