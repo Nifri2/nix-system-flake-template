@@ -1,0 +1,64 @@
+version: "3"
+
+# Daily driver: task update -> task build -> task deploy
+#
+# nh picks the nixosConfiguration matching this machine's hostname,
+# which matches its hosts/<hostname>/ directory. To target another
+# host: task build HOST=otherhost
+#
+# If you add a path: input to flake.nix, append `-- --impure` to the
+# nh calls again (that was needed in the original repo for exactly
+# that reason).
+
+vars:
+  HOST:
+    sh: hostname
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - task --list
+
+  check:
+    desc: "Parse all nix files + evaluate the flake (fast, no build, no root)"
+    cmds:
+      - find . -path ./.git -prune -o -name '*.nix' -print0 | xargs -0 nix-instantiate --parse >/dev/null
+      - nix flake show
+
+  build:
+    desc: "Build the system without activating it (no root)"
+    deps: [check]
+    cmds:
+      - nh os build . -H {{.HOST}}
+
+  test:
+    desc: "Build and activate, but NOT as boot default (reboot = rollback)"
+    cmds:
+      - nh os test . -H {{.HOST}}
+
+  boot:
+    desc: "Build and set as boot default WITHOUT live activation (then reboot)"
+    cmds:
+      - nh os boot . -H {{.HOST}}
+
+  deploy:
+    desc: "Build, activate and set as boot default"
+    prompt: "Switch the system (nh os switch)?"
+    cmds:
+      - git status --short
+      - nh os switch . -H {{.HOST}}
+      - nh os info
+
+  update:
+    desc: "Update flake inputs (+ submodules if any); only changes flake.lock"
+    cmds:
+      - git submodule update --init --recursive
+      - nix flake update
+      - git --no-pager diff --stat flake.lock
+
+  rollback:
+    desc: "Roll back to the previous generation"
+    prompt: "Roll back to the previous generation?"
+    cmds:
+      - nh os rollback

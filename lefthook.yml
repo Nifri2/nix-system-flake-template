@@ -1,0 +1,9 @@
+pre-commit:
+  piped: true
+  commands:
+    1_parse:
+      run: find . -path ./.git -prune -o -name '*.nix' -print0 | xargs -0 nix-instantiate --parse >/dev/null
+    2_check:
+      run: nix flake check --no-build
+    3_output:
+      run: nix flake show

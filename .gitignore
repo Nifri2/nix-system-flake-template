@@ -1,0 +1,7 @@
+result
+result-*
+.direnv/
+.task/
+*.pem
+*.crt
+*.key
